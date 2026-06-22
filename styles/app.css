@@ -21,3 +21,6 @@ h1,h2,h3,p { margin-top:0; } h1 { font-size: clamp(2.1rem, 9vw, 3.2rem); line-he
 .empty { border:1px dashed var(--line); border-radius:var(--radius-lg); padding:24px; text-align:center; }
 @keyframes rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } } @keyframes sheet { from { transform:translateY(30px); opacity:0; } to { transform:none; opacity:1; } } @keyframes breathe { 50% { transform:scale(1.08); opacity:.72; } }
 @media (min-width: 760px) { body { padding:24px; } .app-shell { border-radius:36px; min-height: calc(100dvh - 48px); } .screen { min-height: calc(100dvh - 48px); } }
+.auth-screen .hero-orb { margin-top: 8px; }
+.room-panel { margin-bottom: 16px; }
+.danger-chip { color: #fff; background: var(--danger); border-color: color-mix(in srgb, var(--danger) 80%, #000); }
