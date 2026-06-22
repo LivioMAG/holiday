@@ -37,9 +37,16 @@ export async function getProfile(userId) {
 export async function registerUser(payload) {
   validateRegistration(payload);
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase.auth.signUp({ email: payload.email.trim().toLowerCase(), password: payload.password, options: { data: { firstName: payload.firstName.trim(), lastName: payload.lastName.trim() } } });
+  const firstName = payload.firstName.trim();
+  const lastName = payload.lastName.trim();
+  const email = payload.email.trim().toLowerCase();
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password: payload.password,
+    options: { data: { firstName, lastName, first_name: firstName, last_name: lastName } },
+  });
   if (error) throw new Error(error.message || 'Die Registrierung hat leider nicht geklappt.');
-  if (data?.user) await upsertProfile(profileFromRegistration(data.user, payload));
+  if (data?.user && data?.session) await upsertProfile(profileFromRegistration(data.user, payload));
   return data;
 }
 export async function loginUser(payload) {

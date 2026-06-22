@@ -9,6 +9,35 @@ create table if not exists public.profiles (
   updated_at timestamptz not null default now()
 );
 
+create or replace function public.handle_new_user_profile()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, email, first_name, last_name)
+  values (
+    new.id,
+    lower(coalesce(new.email, '')),
+    coalesce(nullif(trim(coalesce(new.raw_user_meta_data->>'firstName', new.raw_user_meta_data->>'first_name', '')), ''), 'Unbekannt'),
+    coalesce(nullif(trim(coalesce(new.raw_user_meta_data->>'lastName', new.raw_user_meta_data->>'last_name', '')), ''), 'Unbekannt')
+  )
+  on conflict (id) do update
+    set email = excluded.email,
+        first_name = excluded.first_name,
+        last_name = excluded.last_name,
+        updated_at = now();
+
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created_create_profile on auth.users;
+create trigger on_auth_user_created_create_profile
+after insert on auth.users
+for each row execute function public.handle_new_user_profile();
+
 create table if not exists public.rooms (
   id uuid primary key default gen_random_uuid(),
   name text default 'Euer Raum',
