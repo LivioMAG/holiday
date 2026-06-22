@@ -1,0 +1,8 @@
+import { loginUser, registerUser } from '../../services/auth-service.js';
+import { formData, showError } from '../../ui/dom.js';
+
+export function renderAuth(app, onAuthenticated) {
+  app.innerHTML = `<section class="card stack"><h1>Willkommen zurück.</h1><p>Logge dich ein oder erstelle einen Account für euren privaten Holiday-Raum.</p><div class="grid"><form id="login" class="stack"><h2>Willkommen zurück.</h2><label>E-Mail-Adresse<input name="email" autocomplete="email" /></label><label>Passwort<input name="password" type="password" autocomplete="current-password" /></label><div data-error></div><button class="button-primary">Einloggen</button></form><form id="register" class="stack"><h2>Erstelle deinen Account.</h2><label>Vorname<input name="firstName" autocomplete="given-name" /></label><label>Name<input name="lastName" autocomplete="family-name" /></label><label>E-Mail-Adresse<input name="email" autocomplete="email" /></label><label>Passwort<input name="password" type="password" autocomplete="new-password" /></label><div data-error></div><button class="button-primary">Registrieren</button></form></div></section>`;
+  app.querySelector('#login').addEventListener('submit', async (event) => { event.preventDefault(); const error = event.currentTarget.querySelector('[data-error]'); try { await loginUser(formData(event.currentTarget)); await onAuthenticated(); } catch (err) { showError(error, err.message); } });
+  app.querySelector('#register').addEventListener('submit', async (event) => { event.preventDefault(); const error = event.currentTarget.querySelector('[data-error]'); try { await registerUser(formData(event.currentTarget)); await onAuthenticated(); } catch (err) { showError(error, err.message); } });
+}

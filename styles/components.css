@@ -1,0 +1,19 @@
+.card { background: color-mix(in srgb, var(--color-surface) 94%, transparent); border: 1px solid var(--color-border); border-radius: 32px; box-shadow: var(--shadow-soft); padding: clamp(24px, 5vw, 48px); }
+.stack { display: grid; gap: 18px; }
+.grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+h1 { font-size: clamp(2rem, 6vw, 4.5rem); line-height: .95; margin: 0; letter-spacing: -.06em; }
+h2 { margin: 0; font-size: clamp(1.5rem, 3vw, 2.25rem); letter-spacing: -.04em; }
+p { color: var(--color-text-soft); line-height: 1.7; margin: 0; }
+label { display: grid; gap: 8px; color: var(--color-text-soft); font-weight: 700; }
+input { width: 100%; border: 1px solid var(--color-border); border-radius: 18px; padding: 15px 16px; color: var(--color-text); background: var(--color-surface); outline: none; }
+input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 20%, transparent); }
+button { border: 0; border-radius: 999px; padding: 14px 22px; cursor: pointer; font-weight: 800; transition: transform .18s ease, box-shadow .18s ease; }
+button:hover { transform: translateY(-1px); }
+.button-primary { background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)); color: white; box-shadow: 0 14px 32px rgba(255, 107, 154, .28); }
+.button-secondary { background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); }
+.button-danger { background: var(--color-error); color: white; }
+.actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.alert { border-radius: 18px; padding: 14px 16px; background: color-mix(in srgb, var(--color-error) 12%, var(--color-surface)); color: var(--color-text); border: 1px solid color-mix(in srgb, var(--color-error) 40%, var(--color-border)); }
+.success { background: color-mix(in srgb, var(--color-success) 18%, var(--color-surface)); border-color: var(--color-success); }
+.code { display: inline-block; font-size: clamp(2rem, 7vw, 4rem); letter-spacing: .24em; font-weight: 900; padding: 16px 24px; border-radius: 24px; background: color-mix(in srgb, var(--color-accent) 18%, var(--color-surface)); }
+.meta { color: var(--color-text-soft); font-size: .95rem; }
