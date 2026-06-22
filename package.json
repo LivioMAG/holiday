@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "lint": "node --check src/app.js && node --check src/services/between-us-store.js && node --check src/utils/date-utils.js",
+    "lint": "node --check src/app.js && node --check src/services/between-us-store.js && node --check src/services/supabase-client.js && node --check src/utils/date-utils.js",
     "build": "node scripts/build-check.js",
     "format": "node scripts/format-check.js"
   }

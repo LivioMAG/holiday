@@ -1,4 +1,5 @@
 import { formatLongDate, formatMonth, localDateKey } from './utils/date-utils.js'
+import { createSupabaseClient } from './services/supabase-client.js'
 import { addCheckin, bucketCategories, bucketStatuses, createMemoryDraftFromBucket, deleteBucketItem, deleteMemory, getCheckinStatus, loadState, moods, openReveal, persistState, saveBucketItem, saveMemory, updateBucketStatus } from './services/between-us-store.js'
 
 const app = document.querySelector('#app')
@@ -7,6 +8,7 @@ let modal = ''
 let toast = ''
 let bucketFilter = 'alle'
 let onboardingStep = 0
+let supabaseStatus = { isConfigured: false, message: 'Supabase wird geprüft.' }
 const onboarding = [
   ['Euer privater Raum.', 'Ein Ort für tägliche Nähe, schöne Erinnerungen und gemeinsame Wünsche.'],
   ['Paar verbinden', 'Erstellt einen privaten Paarraum oder gebt einen Einladungscode ein.'],
@@ -19,13 +21,20 @@ function commit(message) { persistState(state); toast = message || ''; render();
 function esc(value='') { return String(value).replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])) }
 function viewTitle() { return state.activeView === 'today' ? 'Heute' : state.activeView === 'memories' ? 'Memorys' : 'Bucketlist' }
 
+async function initSupabase() {
+  const { client, config } = await createSupabaseClient()
+  window.betweenUsSupabase = client
+  supabaseStatus = { isConfigured: Boolean(client), message: config.message }
+  render()
+}
+
 function render() {
   app.dataset.theme = state.theme
   app.innerHTML = state.onboarded ? shell() : onboardingView()
   bind()
 }
 
-function shell() { return `<main class="screen"><div class="topbar"><div><div class="eyebrow">Between Us</div><h2>${viewTitle()}</h2></div><button class="btn ghost" data-action="theme" aria-label="Theme wechseln">${state.theme === 'dark' ? 'Hell' : 'Dunkel'}</button></div>${state.activeView === 'today' ? todayView() : state.activeView === 'memories' ? memoriesView() : bucketView()}</main>${nav()}${modal}${toast ? `<div class="toast" role="status">${toast}</div>` : ''}` }
+function shell() { return `<main class="screen"><div class="topbar"><div><div class="eyebrow">Between Us</div><h2>${viewTitle()}</h2><small>${supabaseStatus.isConfigured ? 'Supabase konfiguriert' : 'Demo-Modus'}</small></div><button class="btn ghost" data-action="theme" aria-label="Theme wechseln">${state.theme === 'dark' ? 'Hell' : 'Dunkel'}</button></div>${state.activeView === 'today' ? todayView() : state.activeView === 'memories' ? memoriesView() : bucketView()}</main>${nav()}${modal}${toast ? `<div class="toast" role="status">${toast}</div>` : ''}` }
 function nav() { return `<nav class="bottom-nav" aria-label="Hauptnavigation">${[['today','Heute','◐'],['memories','Memorys','◇'],['bucket','Bucketlist','＋']].map(([id,label,icon]) => `<button class="nav-item ${state.activeView===id?'active':''}" data-view="${id}"><span aria-hidden="true">${icon}</span><span>${label}</span></button>`).join('')}</nav>` }
 
 function onboardingView() { const [title,text] = onboarding[onboardingStep]; return `<main class="screen stack"><div class="hero-orb" aria-hidden="true"></div><section class="card stack"><div class="eyebrow">Schritt ${onboardingStep+1} von ${onboarding.length}</div><h1>${title}</h1><p>${text}</p>${onboardingStep===1 ? `<div class="card"><strong>Einladungscode</strong><h2>${state.pair.inviteCode}</h2><label class="field">Code eingeben<input id="invite" placeholder="z. B. US-4287" /></label></div>`:''}<div class="grid2"><button class="btn secondary" data-action="skip">Überspringen</button><button class="btn" data-action="next-onboarding">${onboardingStep===0?'Gemeinsam starten':onboardingStep===onboarding.length-1?'Zum Check-in':'Weiter'}</button></div></section></main>` }
@@ -45,3 +54,4 @@ function bucketModal(item = { title:'', description:'', category:'Dates', status
 function bind() { document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{state.activeView=b.dataset.view; commit()}); document.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>action(b.dataset.action)); document.querySelectorAll('[data-mood]').forEach(b=>b.onclick=()=>{b.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); b.classList.add('active'); document.querySelector('[name="mood"]').value=b.dataset.mood}); document.querySelector('#checkin-form')?.addEventListener('submit', e=>{e.preventDefault(); try{addCheckin(state,Object.fromEntries(new FormData(e.target))); commit('Deine Antwort ist sicher gespeichert.')}catch(err){commit(err.message)}}); document.querySelector('#memory-form')?.addEventListener('submit', e=>{e.preventDefault(); try{saveMemory(state,Object.fromEntries(new FormData(e.target))); modal=''; state.activeView='memories'; commit('Euer Moment des Tages ist gespeichert.')}catch(err){commit(err.message)}}); document.querySelector('#bucket-form')?.addEventListener('submit', e=>{e.preventDefault(); try{saveBucketItem(state,Object.fromEntries(new FormData(e.target))); modal=''; commit('Euer Wunsch ist gespeichert.')}catch(err){commit(err.message)}}); document.querySelectorAll('[data-new-memory]').forEach(b=>b.onclick=()=>{const existing=state.memories.find(m=>m.date===localDateKey()); memoryModal(existing || undefined)}); document.querySelectorAll('[data-edit-memory]').forEach(b=>b.onclick=()=>memoryModal(state.memories.find(m=>m.id===b.dataset.editMemory))); document.querySelectorAll('[data-delete-memory]').forEach(b=>b.onclick=()=>{if(confirm('Dieses Memory wirklich löschen?')){deleteMemory(state,b.dataset.deleteMemory);commit('Memory gelöscht.')}}); document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{bucketFilter=b.dataset.filter;render()}); document.querySelectorAll('[data-edit-bucket]').forEach(b=>b.onclick=()=>bucketModal(b.dataset.editBucket==='new'?undefined:state.bucketItems.find(i=>i.id===b.dataset.editBucket))); document.querySelectorAll('[data-status]').forEach(b=>b.onclick=()=>{const [id,s]=b.dataset.status.split('|'); updateBucketStatus(state,id,s); commit(s==='erlebt'?'Aus Wunsch wird Erlebnis.':'Status aktualisiert.')}); document.querySelectorAll('[data-delete-bucket]').forEach(b=>b.onclick=()=>{if(confirm('Diesen Wunsch wirklich löschen?')){deleteBucketItem(state,b.dataset.deleteBucket);commit('Wunsch gelöscht.')}}); document.querySelectorAll('[data-bucket-memory]').forEach(b=>b.onclick=()=>memoryModal(createMemoryDraftFromBucket(state.bucketItems.find(i=>i.id===b.dataset.bucketMemory)))) }
 function action(a) { if(a==='theme'){state.theme=state.theme==='dark'?'light':'dark'; commit()} if(a==='skip'){state.onboarded=true; commit()} if(a==='next-onboarding'){onboardingStep++; if(onboardingStep>=onboarding.length){state.onboarded=true; onboardingStep=0} commit()} if(a==='simulate'){addCheckin(state,{userId:'partner',mood:'dankbar',text:'Ich habe heute gemerkt, wie gut mir deine Ruhe tut.'}); commit('Demo-Partnerantwort ist eingetroffen.')} if(a==='reveal'){openReveal(state); commit('Eure Antworten sind geöffnet.')} if(a==='close'){modal=''; render()} }
 render()
+initSupabase()
