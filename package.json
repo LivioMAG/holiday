@@ -1,0 +1,1 @@
+{"scripts":{"test":"node --test","lint":"node --check src/**/*.js tests/*.js"},"devDependencies":{},"type":"module"}
